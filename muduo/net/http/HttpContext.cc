@@ -94,15 +94,15 @@ bool HttpContext::parseRequest(Buffer* buf, Timestamp receiveTime)
         if (colon != crlf)
         {
           request_.addHeader(buf->peek(), colon, crlf);
+          buf->retrieveUntil(crlf + 2);
         }
         else
         {
           // empty line, end of header
-          // FIXME:
           state_ = kGotAll;
           hasMore = false;
+          buf->retrieveUntil(crlf + 2); // 只在这里调用一次
         }
-        buf->retrieveUntil(crlf + 2);
       }
       else
       {
@@ -111,7 +111,22 @@ bool HttpContext::parseRequest(Buffer* buf, Timestamp receiveTime)
     }
     else if (state_ == kExpectBody)
     {
-      // FIXME:
+      const std::string& contentLengthStr = request_.getHeader("Content-Length");
+      if (!contentLengthStr.empty()) {
+        size_t contentLength = static_cast<size_t>(atoi(contentLengthStr.c_str()));
+        if (buf->readableBytes() >= contentLength) {
+          request_.setBody(std::string(buf->peek(), contentLength));
+          buf->retrieve(contentLength);
+          state_ = kGotAll;
+          hasMore = false;
+        } else {
+          hasMore = false; // wait for more data
+        }
+      } else {
+        // No Content-Length, treat as no body
+        state_ = kGotAll;
+        hasMore = false;
+      }
     }
   }
   return ok;

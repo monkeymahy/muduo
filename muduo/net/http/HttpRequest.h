@@ -170,7 +170,11 @@ class HttpRequest : public muduo::copyable
     query_.swap(that.query_);
     receiveTime_.swap(that.receiveTime_);
     headers_.swap(that.headers_);
+    body_.swap(that.body_);
   }
+
+  void setBody(const string& body) { body_ = body; }
+  const string& body() const { return body_; }
 
  private:
   Method method_;
@@ -179,6 +183,7 @@ class HttpRequest : public muduo::copyable
   string query_;
   Timestamp receiveTime_;
   std::map<string, string> headers_;
+  string body_;
 };
 
 }  // namespace net
