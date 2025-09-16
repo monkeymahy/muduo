@@ -99,15 +99,9 @@ bool HttpContext::parseRequest(Buffer* buf, Timestamp receiveTime)
         else
         {
           // empty line, end of header
-          // Check if we need to read body
-          const std::string& contentLengthStr = request_.getHeader("Content-Length");
-          if (!contentLengthStr.empty() && atoi(contentLengthStr.c_str()) > 0) {
-            state_ = kExpectBody;
-          } else {
-            state_ = kGotAll;
-          }
-          hasMore = (state_ != kGotAll);
-          buf->retrieveUntil(crlf + 2);
+          state_ = kGotAll;
+          hasMore = false;
+          buf->retrieveUntil(crlf + 2); // 只在这里调用一次
         }
       }
       else
